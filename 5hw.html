@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1</title>
+    <link rel="stylesheet" href="css//bootstrap.min.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link href="css/style.css" rel="stylesheet">
+    <script src="vue.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div class="sample">
+
+            <form v-if="!show" @submit.prevent="handleForm">
+        		<div class="progress">
+					<div class="progress-bar" :style="getStyleProgressBar"></div>
+				</div>
+				<div>
+					<custom-input 
+						v-for="(input, index) of info"
+						:name="input.name"
+						:value="input.value"
+						:pattern="input.pattern"
+						:key="index"
+						@changedata="handleCustom(index, $event)"
+					></custom-input>
+				</div>
+				<button class="btn btn-primary" :disabled="!isFormReady">
+					Send Data
+				</button>
+			</form>
+
+			<div v-else>
+				<table class="table table-bordered">
+					<tr v-for="(input, index) of info">
+						<td>{{input.name}}</td>
+						<td>{{input.value}}</td>
+					</tr>
+				</table>
+			</div>
+
+		</div>
+    </div>
+
+    
+	
+	<script>
+
+		Vue.component('custom-input', {
+			props: ['name', 'value', 'pattern'],
+			data() {
+				return {
+					activated: this.value != ''
+				}
+			},
+			template: `
+				<div class="form-group"> 
+                    <label>
+                    	{{name}}
+                    </label>
+
+                    <span v-if="activated" :class="isValid"></span>
+
+                    <input 	type="text" 
+                    		:value="value"
+                    	   	class="form-control"
+                    	   	@input="handleInput"
+                    >
+            	</div>
+			`,
+			methods: {
+				handleInput(e) {
+					this.activated = true;
+					let obj = {
+						newValue: e.target.value,
+						valid: this.pattern.test(e.target.value)
+					}
+					this.$emit('changedata', obj);
+				}
+			},
+			computed: {
+				isValid() {
+					if (this.pattern.test(this.value)) {
+						return {'success': true}
+					} else {
+						return {'warn' : true}
+					}
+				}
+			}
+		});
+
+		new Vue({
+			el: '#app',
+			data: {
+				info: [
+					{
+						name: 'Name',
+						value: '',
+						pattern: /^[a-zA-Z ]{2,30}$/
+					},
+					{
+						name: 'Phone',
+						value: '',
+						pattern: /^[0-9]{7,14}$/
+					},
+					{
+						name: 'Email',
+						value: '',
+						pattern: /.+/
+					},
+					{
+						name: 'Some Field 1',
+						value: '',
+						pattern: /.+/
+					},
+					{
+						name: 'Some Field 2',
+						value: '',
+						pattern: /.+/
+					}
+				],
+				successInput: [], //поля заполненные успешно
+				done: 0,
+				formSubmited: false,
+				show: false
+			},
+			methods: {
+				handleCustom(index, data) {
+					this.info[index].value = data.newValue;
+					this.successInput[index] = data.valid;
+
+					let done = 0;
+					for (let elem of this.successInput) {
+						elem && done++;
+					}
+
+					this.done = done;
+					console.log(this.done)
+				},
+				handleForm() {
+					this.show = true
+				}
+			},
+			computed: {
+				getStyleProgressBar() {
+					return 'width: ' + ((100 / this.info.length) * this.done) + '%';
+				},
+				isFormReady() {
+					return this.info.length === this.done
+				}
+			},	
+			created() { //инициализация массива
+				for (let i = 0; i < this.info.length; i++) {
+					this.successInput.push(false);
+				}
+			}
+		});
+	</script>
+
+</body>
+</html>
